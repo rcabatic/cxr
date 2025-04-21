@@ -129,32 +129,27 @@ def mosaicSameDay(collection):
 	return new_col
 
 def setImageArea(image):
-    """ Calculates the area of the image covered by the image
-    :param image: an image
-    :type: image: ee.Image
-    :return: Input image with gridCellCoverage property added
-    :rtype: ee.Image
-    """
-    # Select a 10m band from the image
-    blueBand = image.select('blue')
-    
-    # Reduce region with high pixel cap and bestEffort to prevent pixel overflow error
-    imageArea = blueBand.reduceRegion(**{
-        'reducer': ee.Reducer.count(),
-        'scale': 10,
-        'geometry': gridCell,
-        'maxPixels': 1e13,
-        'bestEffort': True
-    }).get('blue')
+	""" Calculates the area of the image covered by the image
+	:param image: an image
+	:type: image: ee.Image
+	:return: Input image with gridCellCoverage property added
+	:rtype: ee.Image
+	"""
+	#select a 10m band from the image
+	blueBand = image.select('blue')
+#         imageArea = blueBand.multiply(ee.Image.pixelArea())
+	imageArea = blueBand.reduceRegion(**{
+		'reducer': ee.Reducer.count(),
+		'scale': 10,
+		'geometry': gridCell})\
+		.get('blue')
 
-    imageArea = ee.Number(imageArea).multiply(100)  # Each pixel = 100 m² (10m x 10m)
+	imageArea = ee.Number(imageArea).multiply(100) #100 m2 cell area (10*10)
 
-    gridCellArea = gridCell.area(1)
 
-    return image.set(
-        'gridCellCoverage',
-        ee.Number(imageArea).divide(gridCellArea).multiply(100)
-    )
+	gridCellArea = gridCell.area(1)
+
+	return image.set('gridCellCoverage', ee.Number(imageArea).divide(gridCellArea).multiply(100))#.set('gridCellArea', gridCellArea).set('imageArea', imageArea)
 
 #FUNCTION: identifies the cloud cover threshold to use in order to return a minimum number of images
 def setFilterDecending(collection, startFilter, interval, iterations, minImages, defaultFilter): 
